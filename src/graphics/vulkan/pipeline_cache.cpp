@@ -3489,11 +3489,17 @@ bool VulkanPipelineCache::EnsurePipelineCreated(const PipelineCreationArguments&
     REXGPU_ERROR(
         "VulkanPipelineCache: vkCreateGraphicsPipelines failed (result={}, vs={:016X}, "
         "ps={:016X}, topo={}, geom={}, tess_mode={}, patch_cp={}, render_pass_key=0x{:08X}, "
+        "depth_attachment={}, depth_test={}, depth_write={}, depth_compare={}, stencil_test={}, "
         "dynamic_rendering={})",
         int32_t(create_result), creation_arguments.vertex_shader->shader().ucode_data_hash(),
         ps_hash, uint32_t(description.primitive_topology), uint32_t(description.geometry_shader),
         uint32_t(description.tessellation_mode),
         creation_arguments.tessellation_patch_control_points, description.render_pass_key.key,
+        uint32_t((description.render_pass_key.depth_and_color_used & 1u) != 0),
+        uint32_t(depth_stencil_state.depthTestEnable),
+        uint32_t(depth_stencil_state.depthWriteEnable),
+        uint32_t(depth_stencil_state.depthCompareOp),
+        uint32_t(depth_stencil_state.stencilTestEnable),
         uint32_t(use_dynamic_rendering));
     return false;
   }
