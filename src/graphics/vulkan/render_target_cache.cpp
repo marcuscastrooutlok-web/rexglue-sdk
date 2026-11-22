@@ -965,7 +965,7 @@ bool VulkanRenderTargetCache::Initialize(uint32_t shared_memory_binding_count) {
               sizeof(last_update_framebuffer_attachments_));
   last_update_framebuffer_ = VK_NULL_HANDLE;
 
-  REXGPU_INFO(
+  REXGPU_WARN(
       "SHADOW_DIAG: Vulkan render target path={}, FSI supported={}, D24S8 sampled+depth attachment supported={}, depth format optimal features=0x{:08X}",
       uint32_t(path_), uint32_t(fsi_path_supported),
       uint32_t(depth_unorm24_vulkan_format_supported_),
