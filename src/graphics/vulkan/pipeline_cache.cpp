@@ -3503,6 +3503,29 @@ bool VulkanPipelineCache::EnsurePipelineCreated(const PipelineCreationArguments&
         uint32_t(use_dynamic_rendering));
     return false;
   }
+  static std::atomic<uint32_t> shadow_diag_pipeline_logs{0};
+  const uint32_t shadow_diag_index =
+      shadow_diag_pipeline_logs.fetch_add(1, std::memory_order_relaxed);
+  if (shadow_diag_index < 48) {
+    const uint64_t vs_hash =
+        creation_arguments.vertex_shader->shader().ucode_data_hash();
+    const uint64_t ps_hash = creation_arguments.pixel_shader
+                                 ? creation_arguments.pixel_shader->shader().ucode_data_hash()
+                                 : 0;
+    REXGPU_WARN(
+        "SHADOW_DIAG: pipeline[{}] vs={:016X} ps={:016X} render_pass=0x{:08X} "
+        "depth_attachment={} depth_test={} depth_write={} depth_compare={} "
+        "stencil_test={} stencil_front_compare={} stencil_back_compare={} dynamic_rendering={}",
+        shadow_diag_index, vs_hash, ps_hash, description.render_pass_key.key,
+        uint32_t((description.render_pass_key.depth_and_color_used & 1u) != 0),
+        uint32_t(depth_stencil_state.depthTestEnable),
+        uint32_t(depth_stencil_state.depthWriteEnable),
+        uint32_t(depth_stencil_state.depthCompareOp),
+        uint32_t(depth_stencil_state.stencilTestEnable),
+        uint32_t(depth_stencil_state.front.compareOp),
+        uint32_t(depth_stencil_state.back.compareOp),
+        uint32_t(use_dynamic_rendering));
+  }
   bool was_placeholder =
       creation_arguments.pipeline->second.is_placeholder.load(std::memory_order_acquire);
   VkPipeline old_pipeline =
