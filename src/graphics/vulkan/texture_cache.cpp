@@ -599,6 +599,10 @@ void VulkanTextureCache::RequestTextures(uint32_t used_texture_mask) {
       VulkanTexture::Usage old_usage =
           binding_texture->SetUsage(VulkanTexture::Usage::kGuestShaderSampled);
       if (old_usage != VulkanTexture::Usage::kGuestShaderSampled) {
+        VkPipelineStageFlags src_stage_mask;
+        VkAccessFlags src_access_mask;
+        VkImageLayout old_layout;
+        GetTextureUsageMasks(old_usage, src_stage_mask, src_access_mask, old_layout);
         static uint32_t shadow_diag_barrier_logs = 0;
         if (shadow_diag_barrier_logs < 128) {
           ++shadow_diag_barrier_logs;
@@ -606,13 +610,9 @@ void VulkanTextureCache::RequestTextures(uint32_t used_texture_mask) {
               "SHADOW_BIND_DIAG: barrier index={} format={} old_usage={} new_usage={} old_layout={} new_layout={} image={}",
               index, uint32_t(binding->key.format), uint32_t(old_usage),
               uint32_t(VulkanTexture::Usage::kGuestShaderSampled),
-              uint32_t(VK_IMAGE_LAYOUT_UNDEFINED), uint32_t(new_layout),
+              uint32_t(old_layout), uint32_t(new_layout),
               reinterpret_cast<uintptr_t>(binding_texture->image()));
         }
-        VkPipelineStageFlags src_stage_mask;
-        VkAccessFlags src_access_mask;
-        VkImageLayout old_layout;
-        GetTextureUsageMasks(old_usage, src_stage_mask, src_access_mask, old_layout);
         command_processor_.PushImageMemoryBarrier(binding_texture->image(),
                                                   ui::vulkan::util::InitializeSubresourceRange(),
                                                   src_stage_mask, dst_stage_mask, src_access_mask,
