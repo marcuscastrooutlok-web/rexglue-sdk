@@ -599,6 +599,16 @@ void VulkanTextureCache::RequestTextures(uint32_t used_texture_mask) {
       VulkanTexture::Usage old_usage =
           binding_texture->SetUsage(VulkanTexture::Usage::kGuestShaderSampled);
       if (old_usage != VulkanTexture::Usage::kGuestShaderSampled) {
+        static uint32_t shadow_diag_barrier_logs = 0;
+        if (shadow_diag_barrier_logs < 128) {
+          ++shadow_diag_barrier_logs;
+          REXGPU_INFO(
+              "SHADOW_BIND_DIAG: barrier index={} format={} old_usage={} new_usage={} old_layout={} new_layout={} image={}",
+              index, uint32_t(binding->key.format), uint32_t(old_usage),
+              uint32_t(VulkanTexture::Usage::kGuestShaderSampled),
+              uint32_t(VK_IMAGE_LAYOUT_UNDEFINED), uint32_t(new_layout),
+              reinterpret_cast<uintptr_t>(binding_texture->image()));
+        }
         VkPipelineStageFlags src_stage_mask;
         VkAccessFlags src_access_mask;
         VkImageLayout old_layout;
@@ -654,6 +664,18 @@ VkImageView VulkanTextureCache::GetActiveBindingOrNullImageView(uint32_t fetch_c
       image_view =
           is_signed ? vulkan_binding.image_view_signed : vulkan_binding.image_view_unsigned;
     }
+  }
+  static uint32_t shadow_diag_binding_logs = 0;
+  if (shadow_diag_binding_logs < 128) {
+    ++shadow_diag_binding_logs;
+    REXGPU_INFO(
+        "SHADOW_BIND_DIAG: descriptor index={} dimension={} signed={} binding_valid={} image_view_valid={} format={} texture_image={}",
+        fetch_constant_index, uint32_t(dimension), is_signed, binding != nullptr,
+        image_view != VK_NULL_HANDLE,
+        binding ? uint32_t(binding->key.format) : UINT32_MAX,
+        binding && binding->texture
+            ? reinterpret_cast<uintptr_t>(static_cast<VulkanTexture*>(binding->texture)->image())
+            : uintptr_t(0));
   }
   if (image_view != VK_NULL_HANDLE) {
     return image_view;
